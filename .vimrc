@@ -4,82 +4,79 @@ set nocompatible
 
 filetype off                  " required
 
+" Load vim-plug
+if empty(glob("~/.vim/autoload/plug.vim"))
+    execute '!curl -fLo ~/.vim/autoload/plug.vim https://raw.github.com/junegunn/vim-plug/master/plug.vim'
+endif
+
 " set the runtime path to include Vundle and initialize
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-" alternatively, pass a path where Vundle should install plugins
-"call vundle#begin('~/some/path/here')
+call plug#begin('~/.vim/bundle/')
 
-" let Vundle manage Vundle, required
-Plugin 'gmarik/Vundle.vim'
+set viminfo='20,<10000,s10000
 
-Plugin 'altercation/vim-colors-solarized'
+" Fuzzy file finder
+Plug '/usr/local/opt/fzf' | Plug 'junegunn/fzf.vim'
+
+" color theme
+Plug 'altercation/vim-colors-solarized'
+" Plug 'mhartington/oceanic-next'
 
 " php
-Plugin 'StanAngeloff/php.vim'
-Plugin 'shawncplus/phpcomplete.vim'
-Plugin 'joonty/vdebug'
+"Plug 'StanAngeloff/php.vim'
+"Plug 'shawncplus/phpcomplete.vim'
+"Plug 'joonty/vdebug'
 
 " js
-Plugin 'jelera/vim-javascript-syntax'
-Plugin 'moll/vim-node'
-Plugin 'scrooloose/syntastic'
-Plugin 'Valloric/YouCompleteMe'
+Plug 'pangloss/vim-javascript'
+let g:javascript_plugin_jsdoc = 1 "enable jsdoc highlighting
+
+Plug 'mxw/vim-jsx'
+let g:jsx_ext_required = 0 " enable jsx syntax highlighting for non .jsx files
+
+Plug 'moll/vim-node'
+Plug 'scrooloose/syntastic'
+Plug 'Valloric/YouCompleteMe'
 
 " scss
-Plugin 'brigade/scss-lint'
-Plugin 'cakebaker/scss-syntax.vim'
+Plug 'brigade/scss-lint'
+Plug 'cakebaker/scss-syntax.vim'
 
 "editorconfig
-Plugin 'editorconfig/editorconfig-vim'
+Plug 'editorconfig/editorconfig-vim'
 
 "fancy selection
-Plugin 'terryma/vim-expand-region'
+Plug 'terryma/vim-expand-region'
 
 "code completion
-Plugin 'marijnh/tern_for_vim'
+Plug 'marijnh/tern_for_vim'
 
 " git magic
-Plugin 'tpope/vim-fugitive'
+Plug 'tpope/vim-fugitive'
 
 " show git diffs in gutter
-Plugin 'airblade/vim-gitgutter'
+Plug 'airblade/vim-gitgutter'
 
 " statusline magic
-Plugin 'bling/vim-airline'
+Plug 'bling/vim-airline'
+
+" cool icons for statusline & beyond
+Plug 'ryanoasis/vim-devicons'
 
 " file navigation
-Plugin 'scrooloose/nerdtree'
+Plug 'scrooloose/nerdtree'
 
 " commenting
-Plugin 'scrooloose/nerdcommenter'
+Plug 'scrooloose/nerdcommenter'
 
 " better yanking
-Plugin 'vim-scripts/YankRing.vim'
+" Plug 'vim-scripts/YankRing.vim'
+Plug 'maxbrunsfeld/vim-yankstack'
 
-" The following are examples of different formats supported.
-" Keep Plugin commands between vundle#begin/end.
-
-" plugin on GitHub repo
-" Plugin 'tpope/vim-fugitive'
-" plugin from http://vim-scripts.org/vim/scripts.html
-" Plugin 'L9'
-
-" Git plugin not hosted on GitHub
-" Plugin 'git://git.wincent.com/command-t.git'
-
-" git repos on your local machine (i.e. when working on your own plugin)
-" Plugin 'file:///home/gmarik/path/to/plugin'
-
-" The sparkup vim script is in a subdirectory of this repo called vim.
-" Pass the path to set the runtimepath properly.
-" Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
-
-" Avoid a name conflict with L9
-" Plugin 'user/L9', {'name': 'newL9'}
+" auto paste mode
+Plug 'ConradIrwin/vim-bracketed-paste'
 
 " All of your Plugins must be added before the following line
-call vundle#end()            " required
+call plug#end()              " required
 filetype plugin indent on    " required
 
 
@@ -116,18 +113,30 @@ set sidescroll=1
 filetype plugin on
 filetype indent on
 
+"some stuff to get the mouse going in term
+set mouse=a
+set ttymouse=xterm2
+
+if has('mouse_sgr')
+    set ttymouse=sgr
+endif
+
 "turn on syntax highlighting
-syntax on
+syntax enable
 
 "tell the term has 256 colors
 set t_Co=256
+set background=dark
+colorscheme solarized "OceanicNext
+let g:oceanic_next_terminal_italic = 1  " enable italics, disabled by default
+let g:oceanic_next_terminal_bold = 1    " enable bold, disabled by default
 
 "hide buffers when not displayed
 set hidden
 
-" Make tabs 4 spaces wide "
-set tabstop=4
-set shiftwidth=4
+" Make tabs 2 spaces wide "
+set tabstop=2
+set shiftwidth=2
 set expandtab
 set autoindent
 
@@ -151,7 +160,7 @@ if v:version >= 703
     set undodir=~/.vim/undofiles
     set undofile
 
-    "set colorcolumn=+1 "mark the ideal max text width
+"    set colorcolumn=+1 "mark the ideal max text width
 endif
 
 "display tabs and trailing spaces
@@ -172,8 +181,8 @@ func! Paste_on_off()
    return
 endfunc
 
-nnoremap <C-F10> :call Paste_on_off()<CR>
-set pastetoggle=<C-F10>
+nnoremap <silent> <F10> :call Paste_on_off()<CR>
+set pastetoggle=<F10>
 
 "make <c-l> clear the highlight as well as redraw
 nnoremap <C-L> :nohls<CR><C-L>
@@ -232,16 +241,9 @@ autocmd StdinReadPre * let s:std_in=1
 autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 " open NerdTree with Ctrl-N
-map <C-F11> :NERDTreeToggle<CR>
+map <C-n> :NERDTreeToggle<CR>
 
 " close vim if the only window left open is a NERDTree
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
 
-"some stuff to get the mouse going in term
-set mouse=a
 
-if has('mouse_sgr')
-    set ttymouse=sgr
-endif
-
-set ttymouse=xterm2
