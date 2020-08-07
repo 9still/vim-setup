@@ -17,9 +17,19 @@ set viminfo='20,<10000,s10000
 " Fuzzy file finder
 Plug '/usr/local/opt/fzf' | Plug 'junegunn/fzf.vim'
 
-" color theme
-Plug 'altercation/vim-colors-solarized'
-" Plug 'mhartington/oceanic-next'
+" Ripgrep stuff for :Find command
+" https://medium.com/@crashybang/supercharge-vim-with-fzf-and-ripgrep-d4661fc853d2
+" --column: Show column number
+" --line-number: Show line number
+" --no-heading: Do not show file headings in results
+" --fixed-strings: Search term as a literal string
+" --ignore-case: Case insensitive search
+" --no-ignore: Do not respect .gitignore, etc...
+" --hidden: Search hidden files and folders
+" --follow: Follow symlinks
+" --glob: Additional conditions for search (in this case ignore everything in the .git/ folder)
+" --color: Search color options
+command! -bang -nargs=* Find call fzf#vim#grep('rg --column --line-number --no-heading --fixed-strings --ignore-case --no-ignore --hidden --follow --glob "!.git/*" --color "always" '.shellescape(<q-args>), 1, <bang>0)
 
 " php
 "Plug 'StanAngeloff/php.vim'
@@ -33,25 +43,36 @@ let g:javascript_plugin_jsdoc = 1 "enable jsdoc highlighting
 Plug 'mxw/vim-jsx'
 let g:jsx_ext_required = 0 " enable jsx syntax highlighting for non .jsx files
 
+Plug 'jxnblk/vim-mdx-js'
+
 Plug 'moll/vim-node'
-Plug 'scrooloose/syntastic'
-Plug 'Valloric/YouCompleteMe'
+
+" YouCompleteMe
+Plug 'ycm-core/YouCompleteMe'
+let g:ycm_filepath_blacklist = {} "whitelist all filetypes for filepath completion
 
 " scss
 Plug 'brigade/scss-lint'
 Plug 'cakebaker/scss-syntax.vim'
 
+" post install (yarn install | npm install) then load plugin only for editing supported files
+Plug 'prettier/vim-prettier', {
+  \ 'do': 'npm install',
+  \ 'for': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'graphql'] }
+
 "editorconfig
 Plug 'editorconfig/editorconfig-vim'
 
 "fancy selection
-Plug 'terryma/vim-expand-region'
+"Plug 'terryma/vim-expand-region'
 
 "code completion
-Plug 'marijnh/tern_for_vim'
+"Plug 'marijnh/tern_for_vim'
 
 " git magic
 Plug 'tpope/vim-fugitive'
+autocmd QuickFixCmdPost *grep* cwindow
+autocmd QuickFixCmdPost *log* cwindow
 
 " show git diffs in gutter
 Plug 'airblade/vim-gitgutter'
@@ -68,12 +89,51 @@ Plug 'scrooloose/nerdtree'
 " commenting
 Plug 'scrooloose/nerdcommenter'
 
+autocmd BufEnter *.mdx :setlocal filetype=javascript
+
+" ALE linting
+Plug 'dense-analysis/ale'
+let g:ale_sign_error = '⛔'
+let g:ale_sign_warning = '⚠️'
+" let g:ale_sign_error = '✘'
+" let g:ale_sign_warning = '⚠'
+autocmd VimEnter * highlight ALEErrorSign ctermbg=NONE ctermfg=red
+autocmd VimEnter * highlight ALEWarningSign ctermbg=NONE ctermfg=yellow
+
+let g:ale_linters = {}
+let g:ale_linters['javascript'] = ['eslint']
+let g:ale_linters['mdx'] = ['mdxlint']
+let g:ale_linters['css'] = ['stylelint']
+let g:ale_linters['scss'] = ['stylelint']
+
+let g:ale_fixers = {}
+let g:ale_fixers['*'] = ['remove_trailing_lines', 'trim_whitespace']
+let g:ale_fixers['markdown'] = ['prettier']
+let g:ale_fixers['json'] = ['prettier']
+let g:ale_fixers['css'] = ['stylelint', 'prettier']
+let g:ale_fixers['scss'] = ['stylelint', 'prettier']
+let g:ale_fixers['javascript'] = ['eslint', 'prettier']
+let g:ale_fixers['javascript.jsx'] = ['prettier']
+
+" don't run any linters other than what's explicitly defined above
+" let g:ale_linters_explicit = 1
+
+let g:airline#extensions#ale#enabled = 1
+
+
+" use local .prettierrc
+let g:ale_javascript_prettier_use_local_config = 1
+
 " better yanking
-" Plug 'vim-scripts/YankRing.vim'
-Plug 'maxbrunsfeld/vim-yankstack'
+Plug 'vim-scripts/YankRing.vim'
+" Plug 'maxbrunsfeld/vim-yankstack'
 
 " auto paste mode
 Plug 'ConradIrwin/vim-bracketed-paste'
+
+" color theme
+Plug 'altercation/vim-colors-solarized'
+" Plug 'mhartington/oceanic-next'
 
 " All of your Plugins must be added before the following line
 call plug#end()              " required
@@ -137,6 +197,7 @@ set hidden
 " Make tabs 2 spaces wide "
 set tabstop=2
 set shiftwidth=2
+set numberwidth=5
 set expandtab
 set autoindent
 
@@ -154,6 +215,8 @@ set hlsearch    "hilight searches by default
 set wrap        "dont wrap lines
 set linebreak   "wrap lines at convenient points
 set laststatus=2  "always show statusline
+set shortmess=a "disable Press ENTER or type command to continue
+set cmdheight=2
 
 if v:version >= 703
     "undo settings
@@ -225,16 +288,11 @@ autocmd filetype svn,*commit* setlocal spell
 "leave them - otherwise the buffer list gets poluted
 "
 "add a mapping on .. to view parent tree
-autocmd BufReadPost fugitive://* set bufhidden=delete
-autocmd BufReadPost fugitive://*
-  \ if fugitive#buffer().type() =~# '^\%(tree\|blob\)$' |
-  \   nnoremap <buffer> .. :edit %:h<CR> |
-  \ endif
-
-" plugin settings
-"
-let g:syntastic_javascript_checkers = ['eslint']
-let g:syntastic_aggregate_errors = 1
+"autocmd BufReadPost fugitive://* set bufhidden=delete
+"autocmd BufReadPost fugitive://*
+"  \ if fugitive#buffer().type() =~# '^\%(tree\|blob\)$' |
+"  \   nnoremap <buffer> .. :edit %:h<CR> |
+"  \ endif
 
 " open a NERDTree automatically when vim starts up if no files were specified
 autocmd StdinReadPre * let s:std_in=1
@@ -246,4 +304,9 @@ map <C-n> :NERDTreeToggle<CR>
 " close vim if the only window left open is a NERDTree
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
 
+" Fix the difficult-to-read default setting for diff text highlighting.  The
+" bang (!) is required since we are overwriting the DiffText setting.
+highlight! link DiffText ErrorMsg
 
+set path=.,src
+set suffixesadd=.js,.jsx
